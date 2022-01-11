@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CSS only -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      crossorigin="anonymous"
+    />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <form class="std-form" id="addressForm" autocomplete="off">
+            <h5>Google Places Autocomplete</h5>
+            <select
+              id="country"
+              onchange="onCountryChange()"
+              class="form-select"
+              aria-label="Countries"
+            >
+              <option selected value="IN">India</option>
+              <option value="UK">United Kingdom</option>
+              <option value="US">United States</option>
+              <option value="BD">Bangladesh</option>
+              <option value="LK">Sri Lanka</option>
+            </select>
+
+            <input
+              class="form-control"
+              type="text"
+              value=""
+              placeholder="Address"
+              name="autocomplete"
+              id="autocomplete"
+              autocomplete="off"
+              onkeyup="initAutocomplete()"
+            />
+
+            <input
+              class="form-control"
+              type="text"
+              name="formattedAddress"
+              id="formattedAddress"
+              autocomplete="off"
+              value=""
+              placeholder="Address Line"
+            />
+
+            <input
+              class="form-control"
+              value=""
+              autocomplete="off"
+              type="text"
+              name="postalCode"
+              id="postalCode"
+              placeholder="pin"
+            />
+
+            <input
+              class="form-control"
+              value=""
+              type="text"
+              autocomplete="off"
+              name="city"
+              id="city"
+              placeholder="City"
+            />
+
+            <input
+              class="form-control"
+              value=""
+              type="text"
+              name="state"
+              autocomplete="off"
+              id="state"
+              placeholder="State"
+            />
+          </form>
+        </div>
+        <div class="col-md-8">
+          <h3>Raw Data</h3>
+          <pre id="raw_data"></pre>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBt_pycJnxrvFz9S6yqWKkW3gRSABKYaOI&libraries=places&v=weekly&channel=2"
+    async
+  ></script>
+  <script>
+    var addressData = {
+      city: '',
+      postalCode: '',
+      state: '',
+      address: '',
+      code: 'IN',
+      formattedAddress: ''
+    };
+
+    var locations;
+
+    var countries = [];
+    google.maps.event.addDomListener(window, 'load', initAutocomplete);
+
+    function onCountryChange() {
+      addressData.code = document.getElementById('country').value;
+    }
+
+    function initAutocomplete() {
+      const input = document.getElementById('autocomplete');
+      const autocomplete = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: {
+          country: addressData.code
+        }
+      });
+      const fields = ['address_components', 'formatted_address', 'geometry'];
+      const componentMap = {
+        locality: 'city',
+        postal_code: 'postalCode',
+        administrative_area_level_1: 'state'
+      };
+      autocomplete.setFields(fields);
+      input.focus();
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        document.getElementById('raw_data').innerHTML = JSON.stringify(
+          place,
+          null,
+          4
+        );
+        const components = Object.entries(place.address_components);
+        components.forEach(([key, value]) => {
+          if (componentMap[value.types[0]]) {
+            addressData[componentMap[value.types[0]]] = value.long_name;
+            document.getElementById(componentMap[value.types[0]]).value =
+              value.long_name;
+          }
+        });
+        addressData.formattedAddress = place.formatted_address;
+        document.getElementById('formattedAddress').value =
+          place.formatted_address;
+        document.getElementById('formattedAddress').focus();
+      });
+    }
+  </script>
+</html>
